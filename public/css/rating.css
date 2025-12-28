@@ -163,35 +163,42 @@
   }
 }
 
-@media screen and (-ms-high-contrast: active) {
-  .starability-slot {
-    width: auto;
-  }
-  .starability-slot > input {
-    position: static;
-    margin-right: 0;
-    opacity: 1;
-  }
-  .starability-slot .input-no-rate {
-    display: none;
-  }
-  .starability-slot > label {
-    display: inline;
-    float: none;
-    width: auto;
-    height: auto;
-    font-size: 1em;
-    color: inherit;
-    background: none;
-  }
-  .starability-slot > label::before, .starability-slot > label::after {
-    display: none;
-  }
-}
+/* Media query for mobile devices */
+@media screen and (max-width: 480px) {
 
-.starability-slot > input:checked ~ label,
-.starability-slot > input:hover ~ label,
-.starability-slot > input:focus ~ label {
-  -webkit-transition: background-position .7s;
-  transition: background-position .7s;
+  /* 1. STACK REVIEW BOXES ONE AFTER ANOTHER */
+  .review-card, 
+  .card.col-5 { 
+    width: 100% !important;   /* Force boxes to take full screen width */
+    margin-left: 0 !important; /* Remove Bootstrap offsets */
+    margin-bottom: 1rem;       /* Add space between stacked boxes */
+  }
+
+  /* 2. SHRINK THE STARS */
+  .starability-result {
+    width: 100px !important;            /* 5 stars * 20px */
+    height: 20px !important;            /* Smaller height */
+    background-size: 20px auto !important; /* Scale the PNG sprite */
+  }
+
+  .starability-result:after {
+    height: 20px !important;
+    background-size: 20px auto !important;
+    /* Move background up by the new height (20px) to show gold stars */
+    background-position: 0 -20px !important; 
+  }
+
+  /* 3. RECALCULATE WIDTHS FOR RATINGS */
+  .starability-result[data-rating="5"]::after { width: 100px !important; }
+  .starability-result[data-rating="4"]::after { width: 80px !important; }
+  .starability-result[data-rating="3"]::after { width: 60px !important; }
+  .starability-result[data-rating="2"]::after { width: 40px !important; }
+  .starability-result[data-rating="1"]::after { width: 20px !important; }
+
+  /* 4. BUTTONS STACKING */
+  .edit-btn, .delete-btn {
+    width: 100% !important;
+    display: block;
+    margin-bottom: 10px;
+  }
 }

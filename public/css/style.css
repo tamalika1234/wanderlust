@@ -198,3 +198,22 @@ body{
     order: 4;
   }
 }
+/* =========================
+   BUTTON MEDIA QUERIES
+   ========================= */
+
+/* Default for Mobile (Small Screens) */
+@media (max-width: 400px) {
+  .edit-btn, 
+  .delete-btn {
+    width: 20% !important; /* Buttons take full width */
+    margin-bottom: 10px;    /* Space between stacked buttons */
+    display: block;
+  }
+  
+  .btns-container {
+    display: flex;
+    flex-direction: column;
+  }
+}
+
