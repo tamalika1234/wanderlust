@@ -1,6 +1,7 @@
 const Listing = require("../models/listing");
 
-const fetch = require("node-fetch");
+const axios = require("axios");
+
 const formatPrice = require("../utils/formatPrice");
 
 
@@ -77,15 +78,22 @@ module.exports.createListing = async (req, res) => {
     const searchText = `${location}, ${country}`;
 
     // Forward Geocoding
-    const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchText)}`
-    );
-    const data = await response.json();
-
-    if (!data.length) {
-        req.flash("error", "Location not found");
-        return res.redirect("/listings/new");
+    const geoResponse = await axios.get(
+  "https://nominatim.openstreetmap.org/search",
+  {
+    params: {
+      q: searchText,
+      format: "json",
+      limit: 1
+    },
+    headers: {
+      "User-Agent": "wanderlust-app/1.0 (tamalika1234@gmail.com)"
     }
+  }
+);
+
+const data = geoResponse.data;
+
 
     // Extract coordinates
     const lat = data[0].lat;
@@ -131,17 +139,60 @@ module.exports.renderEditForm = async (req,res) => {
 
 module.exports.updateListing = async (req, res) => {
     let { id } = req.params;
-    let lisiting = await Listing.findByIdAndUpdate(id, { ...req.body.listing });
 
-    if(typeof req.file !== "undefined") {
-        let url = req.file.path;
-        let filename = req.file.filename;
-        lisiting.image = { url, filename };
-        await lisiting.save();
+    const listing = await Listing.findById(id);
+
+    const oldLocation = listing.location;
+    const oldCountry = listing.country;
+
+    // update text fields
+    listing.set(req.body.listing);
+
+    // 🔁 if location OR country changed → re-geocode
+    if (
+        listing.location !== oldLocation ||
+        listing.country !== oldCountry
+    ) {
+        const searchText = `${listing.location}, ${listing.country}`;
+
+        const geoResponse = await axios.get(
+            "https://nominatim.openstreetmap.org/search",
+            {
+                params: {
+                    q: searchText,
+                    format: "json",
+                    limit: 1
+                },
+                headers: {
+                    "User-Agent": "wanderlust-app/1.0 (tamalika1234@gmail.com)"
+                }
+            }
+        );
+
+        const data = geoResponse.data;
+
+        if (data.length) {
+            listing.geometry = {
+                type: "Point",
+                coordinates: [data[0].lon, data[0].lat]
+            };
+        }
     }
-    req.flash("success","Listing Updated!");
+
+    // update image if new image uploaded
+    if (typeof req.file !== "undefined") {
+        listing.image = {
+            url: req.file.path,
+            filename: req.file.filename
+        };
+    }
+
+    await listing.save();
+
+    req.flash("success", "Listing Updated!");
     res.redirect(`/listings/${id}`);
 };
+
 
 module.exports.destroyLisiting = async (req,res) => {
     let {id} = req.params;
